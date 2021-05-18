@@ -1,5 +1,5 @@
 #include <JC_Button.h>
-#include <ShiftDisplay2.h>
+#include <RotaryEncoder.h>
 #include <FastLED.h>
 
 
@@ -7,9 +7,9 @@ enum State {Quantity, Brightness, Mode};
 
 
 // Button pins
-const uint8_t PIN_BTN_LEFT   = A5;
-const uint8_t PIN_BTN_RIGHT  = A4;
-const uint8_t PIN_BTN_STATE  = A3;
+const uint8_t PIN_ROT_LEFT   = A3;
+const uint8_t PIN_ROT_RIGHT  = A2;
+const uint8_t PIN_BTN_STATE  = A1;
 
 // Display pins
 const uint8_t PIN_DIS_SER   = 5;
@@ -85,8 +85,7 @@ uint8_t display_value = 0;
 
 
 // Buttons
-Button button_left(PIN_BTN_LEFT);
-Button button_right(PIN_BTN_RIGHT);
+RotaryEncoder encoder(PIN_ROT_LEFT, PIN_ROT_RIGHT, RotaryEncoder::LatchMode::TWO03);
 Button button_state(PIN_BTN_STATE);
 
 CRGB leds[MAX_LEDS];
@@ -101,14 +100,14 @@ void setup()
   pinMode(PIN_DIS_DIGIT_TEN, OUTPUT);
   pinMode(PIN_DIS_DIGIT_ONE, OUTPUT);
 
+  pinMode(PIN_BTN_STATE, INPUT_PULLUP);
+
   digitalWrite(PIN_DIS_OE, HIGH);
   
   Serial.begin(9600);
   Serial.println("Ready!");
   Serial.println(MAX_MODES);
   
-  button_left.begin();
-  button_right.begin();
   button_state.begin();
 
   FastLED.addLeds<WS2812B, PIN_DATA, GRB>(leds, MAX_LEDS);
@@ -123,15 +122,16 @@ void setup()
 
 void updateButtons(double time, double delta)
 {
-  button_left.read();
-  button_right.read();
+  encoder.tick();
   button_state.read();
+
+  RotaryEncoder::Direction encDir = encoder.getDirection();
   
-  if (button_left.wasPressed()) {
+  if (encDir == RotaryEncoder::Direction::COUNTERCLOCKWISE) {
     left();
   }
   
-  if (button_right.wasPressed()) {
+  if (encDir == RotaryEncoder::Direction::CLOCKWISE) {
     right();
   }
 
